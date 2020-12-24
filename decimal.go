@@ -25,6 +25,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+        "go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
+        "go.mongodb.org/mongo-driver/bson/bsontype"
+        "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // DivisionPrecision is the number of decimal places in the result when it
@@ -1568,4 +1571,15 @@ func (d Decimal) Tan() Decimal {
 		y = y.Neg()
 	}
 	return y
+}
+
+
+func (d Decimal) MarshalBSONValue() (bsontype.Type, []byte, error) {
+        p, _ := primitive.ParseDecimal128(d.String())
+
+	return bsontype.Decimal128, bsoncore.AppendDecimal128(nil, p), nil
+}
+
+func (d Decimal) UnmarshalBSONValue(t bsontype.Type, data []byte) error {
+	return nil
 }
