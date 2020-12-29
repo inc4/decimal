@@ -25,9 +25,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-        "go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
-        "go.mongodb.org/mongo-driver/bson/bsontype"
-        "go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/x/bsonx"
+	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
 
 // DivisionPrecision is the number of decimal places in the result when it
@@ -1573,13 +1575,29 @@ func (d Decimal) Tan() Decimal {
 	return y
 }
 
-
+// MarshalBSONValue .
 func (d Decimal) MarshalBSONValue() (bsontype.Type, []byte, error) {
-        p, _ := primitive.ParseDecimal128(d.String())
+	p, _ := primitive.ParseDecimal128(d.String())
 
 	return bsontype.Decimal128, bsoncore.AppendDecimal128(nil, p), nil
 }
 
-func (d Decimal) UnmarshalBSONValue(t bsontype.Type, data []byte) error {
-	return nil
+// UnmarshalBSONValue .
+func (d *Decimal) UnmarshalBSONValue(t bsontype.Type, data []byte) error {
+	var v bsonx.Val
+
+	err := v.UnmarshalBSONValue(t, data)
+	if err != nil {
+		return err
+	}
+
+	bi, exp, err := v.Decimal128().BigInt()
+	if err != nil {
+		return err
+	}
+
+	d.exp = int32(exp)
+	d.value = bi
+
+	return err
 }
